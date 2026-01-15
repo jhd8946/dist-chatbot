@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob:; connect-src 'self' https://*.workers.dev https://generativelanguage.googleapis.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';">
+    <title>동원과기대 AI 입학상담</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #0066CC 0%, #CC0000 50%, #FFB800 100%);
+            height: 100vh;
+            height: 100dvh; /* 모바일 뷰포트 높이 */
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            left: 0;
+        }
+        
+        .header {
+            background: white;
+            padding: 10px 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo-text {
+            font-size: 0.9em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #0066CC, #CC0000);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .header-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .language-selector {
+            padding: 5px 10px;
+            border: 2px solid #0066CC;
+            border-radius: 12px;
+            background: white;
+            color: #0066CC;
+            font-size: 0.75em;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        
+        .call-button {
+            background: linear-gradient(135deg, #0066CC, #0052A3);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 15px;
+            text-decoration: none;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+        
+        .language-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .language-modal.active {
+            display: flex;
+        }
+        
+        .language-options {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 90%;
+            width: 300px;
+        }
+        
+        .language-options h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #0066CC;
+        }
+        
+        .language-option {
+            padding: 12px;
+            margin: 8px 0;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .language-option:hover {
+            border-color: #0066CC;
+            background: #f0f7ff;
+        }
+        
+        .language-option.selected {
+            border-color: #0066CC;
+            background: linear-gradient(135deg, #0066CC, #0052A3);
+            color: white;
+        }
+        
+        .language-flag {
+            font-size: 1.5em;
+            margin-right: 8px;
+        }
+        
+        .chat-container {
+            flex: 1;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 8px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #0066CC 0%, #CC0000 50%, #FFB800 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: center;
+        }
+        
+        .chat-header h1 {
+            font-size: 1.1em;
+            margin-bottom: 2px;
+        }
+        
+        .chat-header p {
+            font-size: 0.75em;
+            opacity: 0.9;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            background: #f7f9fc;
+        }
+        
+        .message {
+            margin-bottom: 12px;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .bot-message {
+            display: flex;
+            justify-content: flex-start;
+        }
+        
+        .user-message {
+            display: flex;
+            justify-content: flex-end;
+        }
+        
+        .message-content {
+            max-width: 85%;
+            padding: 10px 13px;
+            border-radius: 15px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            font-size: 0.85em;
+        }
+        
+        .bot-message .message-content {
+            background: white;
+            color: #333;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        
+        .user-message .message-content {
+            background: linear-gradient(135deg, #0066CC, #0052A3);
+            color: white;
+        }
+        
+        .message-content a {
+            color: #0066CC;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .chat-input-area {
+            padding: 10px 12px;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 8px;
+            position: sticky;
+            bottom: 0;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 18px;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .chat-input:focus {
+            border-color: #0066CC;
+        }
+        
+        .send-button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #0066CC, #0052A3);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .send-button:active {
+            transform: scale(0.95);
+        }
+        
+        .send-button:disabled {
+            opacity: 0.5;
+        }
+        
+        .consult-button {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            border-radius: 18px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        
+        .consult-button:active {
+            transform: scale(0.95);
+        }
+        
+        .consult-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .consult-modal.active {
+            display: flex;
+        }
+        
+        .consult-form {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 90%;
+            width: 350px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .consult-form h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #0066CC;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+            font-size: 0.9em;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0066CC;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .form-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .submit-consult {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .cancel-consult {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #0066CC;
+            animation: loading 1.4s infinite ease-in-out both;
+            margin: 0 2px;
+        }
+        
+        .loading:nth-child(1) { animation-delay: -0.32s; }
+        .loading:nth-child(2) { animation-delay: -0.16s; }
+        
+        @keyframes loading {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        
+        .chat-messages::-webkit-scrollbar {
+            width: 4px;
+        }
+        
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 4px;
+        }
+
+        .setup-notice {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            padding: 12px;
+            margin: 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 0.85em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo-text">DIST 입학상담</div>
+        <div class="header-right">
+            <button class="language-selector" id="languageBtn">🌐 한국어</button>
+            <a href="tel:055-370-8226" class="call-button">📞 상담전화</a>
+        </div>
+    </div>
+    
+    <div class="language-modal" id="languageModal">
+        <div class="language-options">
+            <h3>Select Language</h3>
+            <div class="language-option selected" data-lang="ko">
+                <span class="language-flag">🇰🇷</span>
+                <span>한국어 (Korean)</span>
+            </div>
+            <div class="language-option" data-lang="en">
+                <span class="language-flag">🇺🇸</span>
+                <span>English</span>
+            </div>
+            <div class="language-option" data-lang="zh">
+                <span class="language-flag">🇨🇳</span>
+                <span>中文 (Chinese)</span>
+            </div>
+            <div class="language-option" data-lang="vi">
+                <span class="language-flag">🇻🇳</span>
+                <span>Tiếng Việt (Vietnamese)</span>
+            </div>
+            <div class="language-option" data-lang="ja">
+                <span class="language-flag">🇯🇵</span>
+                <span>日本語 (Japanese)</span>
+            </div>
+            <div class="language-option" data-lang="uz">
+                <span class="language-flag">🇺🇿</span>
+                <span>O'zbek (Uzbek)</span>
+            </div>
+            <div class="language-option" data-lang="bn">
+                <span class="language-flag">🇧🇩</span>
+                <span>বাংলা (Bengali)</span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="consult-modal" id="consultModal">
+        <div class="consult-form">
+            <h3 id="consultTitle">📞 상담신청</h3>
+            <div class="form-group">
+                <label id="consultNameLabel">이름 *</label>
+                <input type="text" id="consultName" placeholder="" required>
+            </div>
+            <div class="form-group">
+                <label id="consultPhoneLabel">연락처 *</label>
+                <input type="tel" id="consultPhone" placeholder="010-1234-5678" required>
+            </div>
+            <div class="form-group">
+                <label id="consultDeptLabel">관심 학과 *</label>
+                <select id="consultDept" required>
+                    <option value="" id="consultDeptPlaceholder">학과를 선택하세요</option>
+                    <optgroup id="healthGroup" label="보건학부">
+                        <option value="간호학과">간호학과</option>
+                        <option value="안경광학과">안경광학과</option>
+                        <option value="보건의료행정과">보건의료행정과</option>
+                    </optgroup>
+                    <optgroup id="aviationGroup" label="항공모빌리티학부">
+                        <option value="항공정비과">항공정비과(3년제)</option>
+                        <option value="항공정비과(야간)">항공정비과(야간)</option>
+                    </optgroup>
+                    <optgroup id="engineeringGroup" label="첨단공학부">
+                        <option value="메카트로닉스과">메카트로닉스과</option>
+                        <option value="선박동력기계과">선박동력기계과</option>
+                        <option value="AI기계제어과">AI기계제어과</option>
+                        <option value="냉동공조설비과">냉동공조설비과</option>
+                        <option value="산업안전관리과">산업안전관리과</option>
+                    </optgroup>
+                    <optgroup id="hotelGroup" label="호텔조리관광학부">
+                        <option value="호텔외식조리과">호텔외식조리과</option>
+                        <option value="외식조리창업과(야간)">외식조리창업과(야간)</option>
+                        <option value="디저트카페창업과">디저트카페창업과</option>
+                        <option value="호텔식품제과제빵과">호텔식품제과제빵과</option>
+                    </optgroup>
+                    <optgroup id="beautyGroup" label="미용예술학부">
+                        <option value="헤어디자인과">헤어디자인과</option>
+                        <option value="생활문화예술과">생활문화예술과</option>
+                    </optgroup>
+                    <optgroup id="sportsGroup" label="스포츠재활학부">
+                        <option value="스포츠재활운동과">스포츠재활운동과</option>
+                        <option value="전문스포츠지도과">전문스포츠지도과</option>
+                    </optgroup>
+                    <optgroup id="humanitiesGroup" label="인문사회학부">
+                        <option value="유아교육과(3년제)">유아교육과(3년제)</option>
+                        <option value="사회복지과">사회복지과</option>
+                        <option value="보건복지과">보건복지과</option>
+                    </optgroup>
+                    <optgroup id="generalGroup" label="일반상담">
+                        <option value="입학홍보처">입학홍보처</option>
+                    </optgroup>
+                </select>
+            </div>
+            <div class="form-group">
+                <label id="consultMessageLabel">문의내용 (선택)</label>
+                <input type="text" id="consultMessage" placeholder="">
+            </div>
+            <div class="form-buttons">
+                <button class="cancel-consult" id="cancelBtn" onclick="closeConsultModal()">취소</button>
+                <button class="submit-consult" id="submitBtn" onclick="submitConsult()">상담신청</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <div class="chat-header">
+            <h1 id="chatTitle">🤖 AI 입학상담</h1>
+            <p id="chatSubtitle">내신 등급별 맞춤 학과 추천</p>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+        
+        <div class="chat-input-area">
+            <input type="text" class="chat-input" id="userInput" placeholder="질문을 입력하세요..." />
+            <button class="consult-button" id="consultButton" onclick="openConsultModal()">📞 상담</button>
+            <button class="send-button" id="sendButton">전송</button>
+        </div>
+    </div>
+
+    <script>
+        // ✅ Cloudflare Worker URL (설정 완료!)
+        const PROXY_API_URL = 'https://gemini-proxy.jhd8946.workers.dev';
+        
+        // 학과별 상담교수 정보 (2026학년도 기준)
+        const PROFESSORS = {
+            '간호학과': { name: '김송순', phone: '010-4662-6209', office: '055-370-8243' },
+            '안경광학과': { name: '윤미옥', phone: '010-8931-7214', office: '055-370-8214' },
+            '보건의료행정과': { name: '이승재', phone: '010-5895-4862', office: '055-370-8197' },
+            '항공정비과': { name: '배규한', phone: '010-6511-5235', office: '055-370-8318' },
+            '항공정비과(야간)': { name: '김성우', phone: '010-5626-5877', office: '055-370-8311' },
+            '메카트로닉스과': { name: '이학원', phone: '010-3680-9833', office: '055-370-8371' },
+            '선박동력기계과': { name: '박지언', phone: '010-6585-3163', office: '055-370-8290' },
+            'AI기계제어과': { name: '이학원', phone: '010-3680-9833', office: '055-370-8371' },
+            '냉동공조설비과': { name: '이정현', phone: '010-8569-8819', office: '055-370-8167' },
+            '산업안전관리과': { name: '고경찬', phone: '010-4570-6993', office: '055-370-8195' },
+            '호텔외식조리과': { name: '장용현', phone: '010-4561-2259', office: '055-370-8146' },
+            '외식조리창업과(야간)': { name: '장용현', phone: '010-4561-2259', office: '055-370-8146' },
+            '디저트카페창업과': { name: '구영덕', phone: '010-5531-8283', office: '055-370-8283' },
+            '호텔식품제과제빵과': { name: '정동윤', phone: '010-3698-3835', office: '055-370-8140' },
+            '헤어디자인과': { name: '윤대수', phone: '010-4097-4747', office: '055-370-8184' },
+            '유아교육과(3년제)': { name: '하정연', phone: '010-7582-0037', office: '055-370-8136' },
+            '사회복지과': { name: '조재필', phone: '010-6513-0697', office: '055-370-8279' },
+            '보건복지과': { name: '이선찬', phone: '010-2568-8367', office: '055-370-8198' },
+            '스포츠재활운동과': { name: '조영갑', phone: '010-8818-5511', office: '055-370-8270' },
+            '전문스포츠지도과': { name: '조영갑', phone: '010-8818-5511', office: '055-370-8270' },
+            '생활문화예술과': { name: '고영호', phone: '010-2585-0206', office: '055-370-8192' },
+            '입학홍보처': { name: '입학홍보처', phone: '055-370-8226', office: '055-370-8226' }
+        };
+        
+        const UI_TRANSLATIONS = {
+            ko: {
+                chatTitle: '🤖 AI 입학상담',
+                chatSubtitle: '내신 등급별 맞춤 학과 추천',
+                inputPlaceholder: '질문을 입력하세요...',
+                sendButton: '전송',
+                languageButton: '🌐 한국어'
+            },
+            en: {
+                chatTitle: '🤖 AI Admissions Counseling',
+                chatSubtitle: 'Personalized Department Recommendations',
+                inputPlaceholder: 'Type your question...',
+                sendButton: 'Send',
+                languageButton: '🌐 English'
+            },
+            zh: {
+                chatTitle: '🤖 AI 入学咨询',
+                chatSubtitle: '根据成绩推荐专业',
+                inputPlaceholder: '请输入您的问题...',
+                sendButton: '发送',
+                languageButton: '🌐 中文'
+            },
+            vi: {
+                chatTitle: '🤖 Tư vấn tuyển sinh AI',
+                chatSubtitle: 'Gợi ý khoa học phù hợp',
+                inputPlaceholder: 'Nhập câu hỏi của bạn...',
+                sendButton: 'Gửi',
+                languageButton: '🌐 Tiếng Việt'
+            },
+            ja: {
+                chatTitle: '🤖 AI入学相談',
+                chatSubtitle: '成績別学科推薦',
+                inputPlaceholder: '質問を入力してください...',
+                sendButton: '送信',
+                languageButton: '🌐 日本語'
+            },
+            uz: {
+                chatTitle: '🤖 AI qabul maslahat',
+                chatSubtitle: "Baholar bo'yicha mutaxassislik tavsiyasi",
+                inputPlaceholder: 'Savolingizni kiriting...',
+                sendButton: 'Yuborish',
+                languageButton: "🌐 O'zbek"
+            },
+            bn: {
+                chatTitle: '🤖 এআই ভর্তি পরামর্শ',
+                chatSubtitle: 'গ্রেড অনুযায়ী বিভাগ সুপারিশ',
+                inputPlaceholder: 'আপনার প্রশ্ন লিখুন...',
+                sendButton: 'পাঠান',
+                languageButton: '🌐 বাংলা'
+            }
+        };
+        
+        // 상담 폼 다국어 텍스트
+        const CONSULT_FORM_TEXT = {
+            ko: {
+                title: "📞 상담신청", nameLabel: "이름 *", namePlaceholder: "이름을 입력하세요",
+                phoneLabel: "연락처 *", phonePlaceholder: "010-1234-5678", deptLabel: "관심 학과 *",
+                deptPlaceholder: "학과를 선택하세요", messageLabel: "문의내용 (선택)",
+                messagePlaceholder: "궁금한 내용을 간단히 적어주세요", cancelBtn: "취소", submitBtn: "상담신청"
+            },
+            en: {
+                title: "📞 Consultation", nameLabel: "Name *", namePlaceholder: "Enter name",
+                phoneLabel: "Phone *", phonePlaceholder: "010-1234-5678", deptLabel: "Department *",
+                deptPlaceholder: "Select department", messageLabel: "Inquiry (Optional)",
+                messagePlaceholder: "Brief description", cancelBtn: "Cancel", submitBtn: "Submit"
+            },
+            zh: {
+                title: "📞 咨询申请", nameLabel: "姓名 *", namePlaceholder: "请输入姓名",
+                phoneLabel: "联系方式 *", phonePlaceholder: "010-1234-5678", deptLabel: "专业 *",
+                deptPlaceholder: "请选择专业", messageLabel: "咨询内容（可选）",
+                messagePlaceholder: "简要说明", cancelBtn: "取消", submitBtn: "提交"
+            },
+            vi: {
+                title: "📞 Tư vấn", nameLabel: "Họ tên *", namePlaceholder: "Nhập tên",
+                phoneLabel: "Số ĐT *", phonePlaceholder: "010-1234-5678", deptLabel: "Khoa *",
+                deptPlaceholder: "Chọn khoa", messageLabel: "Nội dung (Tùy chọn)",
+                messagePlaceholder: "Mô tả ngắn", cancelBtn: "Hủy", submitBtn: "Gửi"
+            },
+            ja: {
+                title: "📞 相談申請", nameLabel: "お名前 *", namePlaceholder: "名前を入力",
+                phoneLabel: "連絡先 *", phonePlaceholder: "010-1234-5678", deptLabel: "学科 *",
+                deptPlaceholder: "学科を選択", messageLabel: "内容（任意）",
+                messagePlaceholder: "簡単な説明", cancelBtn: "キャンセル", submitBtn: "申請"
+            },
+            uz: {
+                title: "📞 Maslahat", nameLabel: "Ism *", namePlaceholder: "Ism kiriting",
+                phoneLabel: "Telefon *", phonePlaceholder: "010-1234-5678", deptLabel: "Bo'lim *",
+                deptPlaceholder: "Bo'limni tanlang", messageLabel: "Savol (Ixtiyoriy)",
+                messagePlaceholder: "Qisqa tavsif", cancelBtn: "Bekor qilish", submitBtn: "Yuborish"
+            },
+            bn: {
+                title: "📞 পরামর্শ", nameLabel: "নাম *", namePlaceholder: "নাম লিখুন",
+                phoneLabel: "ফোন *", phonePlaceholder: "010-1234-5678", deptLabel: "বিভাগ *",
+                deptPlaceholder: "বিভাগ নির্বাচন", messageLabel: "বিষয় (ঐচ্ছিক)",
+                messagePlaceholder: "সংক্ষিপ্ত বিবরণ", cancelBtn: "বাতিল", submitBtn: "জমা"
+            }
+        };
+        
+        const WELCOME_MESSAGES = {
+            ko: `안녕하세요! 😊
+동원과기대 AI 입학상담입니다.
+
+무엇이 궁금하신가요?
+
+예) "내신 5등급 갈 수 있는 학과?"`,
+            en: `Hello! 😊
+DIST AI Admissions Counseling.
+
+How can I help you?
+
+Ex) "Which departments for grade 5?"`,
+            zh: `您好！😊
+东园科技大学AI入学咨询。
+
+有什么可以帮您？
+
+例）"5级成绩可以上什么专业？"`,
+            vi: `Xin chào! 😊
+Tư vấn tuyển sinh DIST.
+
+Tôi có thể giúp gì?
+
+VD) "Khoa nào cho điểm 5?"`,
+            ja: `こんにちは！😊
+東園科技大学AI入学相談です。
+
+何かお手伝いできますか？
+
+例）「成績5で入れる学科は？」`,
+            uz: `Assalomu alaykum! 😊
+DIST qabul maslahat.
+
+Sizga qanday yordam bera olaman?
+
+Misol) "5 baho uchun qaysi mutaxassislik?"`,
+            bn: `হ্যালো! 😊
+DIST ভর্তি পরামর্শ।
+
+আমি কীভাবে সাহায্য করতে পারি?
+
+উদাহরণ) "৫ গ্রেডের জন্য কোন বিভাগ?"`
+        };
+        
+        const ADMISSION_DATABASE = `
+Dongwon Institute of Science and Technology (DIST) Admissions Information
+
+IMPORTANT: School Name Translations
+- Korean: 동원과학기술대학교
+- English: Dongwon Institute of Science and Technology (DIST)
+- Japanese: 東園科学技術大学 (NOT 東原!)
+- Chinese (Simplified): 东园科学技术大学
+- Vietnamese: Trường Đại học Khoa học và Công nghệ Dongwon
+- Uzbek: Dongwon Fan va Texnologiya Instituti
+- Bengali: ডংওয়ন বিজ্ঞান ও প্রযুক্তি ইনস্টিটিউট
+
+# Department Recommendations by Grade Level
+
+## Grades 1-2
+Nursing (avg 3.5), Optometry (avg 4.1), Early Childhood Education (avg 3.8)
+
+## Grades 3-4
+Optometry, Aircraft Maintenance, Early Childhood Education, Sports Rehabilitation, Hotel Culinary
+
+## Grades 5-6 ★Recommended for International Students★
+Refrigeration & Air Conditioning (avg 5.0), Smart Mechanical Electronics (avg 5.2), 
+Industrial Safety Management (avg 5.5), Hotel Food & Baking, Social Welfare, Hair Design
+
+## Grades 7-8
+Refrigeration & Air Conditioning, Smart Mechanical Electronics, Industrial Safety Management
+
+# Department Contacts
+- Nursing: Kim Song-soon (055-370-8243, 010-4662-6209)
+- Optometry: Yoon Mi-ok (055-370-8214, 010-8931-7214)
+- Aircraft Maintenance: Bae Gyu-han (055-370-8318, 010-6511-5235)
+
+# Admissions Office: 055-370-8226~8
+
+# Shuttle Bus Information (Contact: 010-2504-8884)
+From Ulsan, Busan, Yangsan areas available.
+`;
+
+        let currentLanguage = 'ko';
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const languageBtn = document.getElementById('languageBtn');
+        const languageModal = document.getElementById('languageModal');
+        
+        // 대화 히스토리 저장 (문맥 유지)
+        let conversationHistory = [];
+
+        function updateUI() {
+            const texts = UI_TRANSLATIONS[currentLanguage];
+            document.getElementById('chatTitle').textContent = texts.chatTitle;
+            document.getElementById('chatSubtitle').textContent = texts.chatSubtitle;
+            userInput.placeholder = texts.inputPlaceholder;
+            sendButton.textContent = texts.sendButton;
+            languageBtn.textContent = texts.languageButton;
+        }
+
+        languageBtn.addEventListener('click', () => {
+            languageModal.classList.add('active');
+        });
+
+        languageModal.addEventListener('click', (e) => {
+            if (e.target === languageModal) {
+                languageModal.classList.remove('active');
+            }
+        });
+
+        document.querySelectorAll('.language-option').forEach(option => {
+            option.addEventListener('click', () => {
+                currentLanguage = option.dataset.lang;
+                
+                // 언어 변경 시 대화 히스토리 초기화
+                conversationHistory = [];
+                
+                updateUI();
+                languageModal.classList.remove('active');
+                
+                document.querySelectorAll('.language-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                option.classList.add('selected');
+                
+                chatMessages.innerHTML = '';
+                addMessage(WELCOME_MESSAGES[currentLanguage]);
+            });
+        });
+
+        function formatPhoneNumbers(text) {
+            text = text.replace(/(\d{3}-\d{3}-\d{4})/g, '<a href="tel:$1">📞 $1</a>');
+            text = text.replace(/(\d{3}-\d{4}-\d{4})/g, '<a href="tel:$1">📱 $1</a>');
+            return text;
+        }
+
+        function addMessage(content, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'bot-message'}`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            
+            if (!isUser) {
+                content = formatPhoneNumbers(content);
+            }
+            
+            contentDiv.innerHTML = content.replace(/\n/g, '<br>');
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message bot-message';
+            loadingDiv.id = 'loading';
+            loadingDiv.innerHTML = `
+                <div class="message-content">
+                    <span class="loading"></span>
+                    <span class="loading"></span>
+                    <span class="loading"></span>
+                </div>
+            `;
+            chatMessages.appendChild(loadingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) loading.remove();
+        }
+
+        async function sendToGemini(userMessage) {
+            try {
+                const languageInstructions = {
+                    ko: 'You MUST answer ONLY in Korean (한국어). Do not mix any other languages.',
+                    en: 'You MUST answer ONLY in English. Do not mix any other languages.',
+                    zh: 'You MUST answer ONLY in Chinese (中文). Do not mix any other languages.',
+                    vi: 'You MUST answer ONLY in Vietnamese (Tiếng Việt). Do not mix any other languages. When Vietnamese people ask about working in Korea and returning home, recommend practical departments like: Refrigeration & Air Conditioning, Smart Mechanical Electronics, Aircraft Maintenance, or Industrial Safety Management.',
+                    ja: 'You MUST answer ONLY in Japanese (日本語). Do not mix any other languages. Always write school name as 東園科学技術大学 (NOT 東原).',
+                    uz: "You MUST answer ONLY in Uzbek (O'zbek tilida). Do not mix any other languages. When Uzbek people ask about working in Korea and returning home, recommend practical technical departments like: Refrigeration & Air Conditioning (Sovutish va konditsionerlash), Smart Mechanical Electronics (Aqlli mexanik elektronika), Aircraft Maintenance (Samolyot texnik xizmati), or Industrial Safety Management (Sanoat xavfsizligi).",
+                    bn: 'You MUST answer ONLY in Bengali (বাংলা). Do not mix any other languages. When Bangladeshi people ask about working in Korea and returning home, recommend practical departments.'
+                };
+
+                const systemPrompt = `You are an admissions counseling chatbot for Dongwon Institute of Science and Technology (DIST).
+
+CRITICAL LANGUAGE INSTRUCTION: ${languageInstructions[currentLanguage]}
+
+${ADMISSION_DATABASE}
+
+Response Rules:
+1. Keep answers concise (2-4 sentences) for mobile users
+2. Recommend specific departments based on student needs
+3. Always include hyphens in phone numbers (e.g., 055-370-8226)
+4. Focus on practical information
+5. Answer in the specified language ONLY
+6. IMPORTANT: Use conversation history to understand context. If user asks follow-up questions like "자격증은?", "학비는?", refer to the previous topic discussed.`;
+
+                // 대화 히스토리를 Gemini API 형식으로 변환
+                const contents = [];
+                
+                // 시스템 프롬프트를 첫 번째 메시지로
+                if (conversationHistory.length === 0) {
+                    contents.push({
+                        role: 'user',
+                        parts: [{ text: systemPrompt + '\n\nUser Question: ' + userMessage }]
+                    });
+                } else {
+                    // 이전 대화 히스토리 포함
+                    contents.push({
+                        role: 'user',
+                        parts: [{ text: systemPrompt }]
+                    });
+                    
+                    // 대화 히스토리 추가
+                    conversationHistory.forEach(msg => {
+                        contents.push({
+                            role: msg.role,
+                            parts: [{ text: msg.text }]
+                        });
+                    });
+                    
+                    // 현재 질문 추가
+                    contents.push({
+                        role: 'user',
+                        parts: [{ text: userMessage }]
+                    });
+                }
+
+                const response = await fetch(PROXY_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        contents: contents,
+                        generationConfig: {
+                            temperature: 0.3,
+                            maxOutputTokens: 1024,
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('API 오류');
+                }
+                
+                const data = await response.json();
+                const aiResponse = data.candidates[0].content.parts[0].text;
+                
+                // 대화 히스토리에 추가 (최근 10개만 유지)
+                conversationHistory.push({
+                    role: 'user',
+                    text: userMessage
+                });
+                conversationHistory.push({
+                    role: 'model',
+                    text: aiResponse
+                });
+                
+                // 최근 10개 대화만 유지 (5번의 질문-답변)
+                if (conversationHistory.length > 20) {
+                    conversationHistory = conversationHistory.slice(-20);
+                }
+                
+                return aiResponse;
+            } catch (error) {
+                console.error('Error:', error);
+                const errorMessages = {
+                    ko: '오류가 발생했습니다. 입학홍보처 📞 055-370-8226~8로 문의해주세요.',
+                    en: 'An error occurred. Please contact 📞 055-370-8226~8.',
+                    zh: '发生错误。请联系 📞 055-370-8226~8。',
+                    vi: 'Đã xảy ra lỗi. Vui lòng liên hệ 📞 055-370-8226~8.',
+                    ja: 'エラーが発生しました。📞 055-370-8226~8 にお問い合わせください。',
+                    uz: "Xatolik yuz berdi. 📞 055-370-8226~8 ga murojaat qiling.",
+                    bn: 'একটি ত্রুটি ঘটেছে। অনুগ্রহ করে 📞 055-370-8226~8 এ যোগাযোগ করুন।'
+                };
+                return errorMessages[currentLanguage];
+            }
+        }
+
+        async function handleSend() {
+            const message = userInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            userInput.value = '';
+            sendButton.disabled = true;
+            
+            showLoading();
+            const response = await sendToGemini(message);
+            removeLoading();
+            
+            addMessage(response);
+            sendButton.disabled = false;
+        }
+
+        sendButton.addEventListener('click', handleSend);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleSend();
+        });
+        
+        userInput.addEventListener('focus', () => {
+            setTimeout(() => {
+                userInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        });
+
+        // 모바일 키보드 대응
+        window.visualViewport?.addEventListener('resize', () => {
+            const viewportHeight = window.visualViewport.height;
+            document.body.style.height = `${viewportHeight}px`;
+        });
+
+        addMessage(WELCOME_MESSAGES[currentLanguage]);
+        
+        // 상담신청 모달 함수
+        function openConsultModal() {
+            updateConsultFormLanguage();
+            document.getElementById('consultModal').classList.add('active');
+        }
+        
+        function updateConsultFormLanguage() {
+            const text = CONSULT_FORM_TEXT[currentLanguage];
+            document.getElementById('consultTitle').textContent = text.title;
+            document.getElementById('consultNameLabel').textContent = text.nameLabel;
+            document.getElementById('consultName').placeholder = text.namePlaceholder;
+            document.getElementById('consultPhoneLabel').textContent = text.phoneLabel;
+            document.getElementById('consultPhone').placeholder = text.phonePlaceholder;
+            document.getElementById('consultDeptLabel').textContent = text.deptLabel;
+            document.getElementById('consultDeptPlaceholder').textContent = text.deptPlaceholder;
+            document.getElementById('consultMessageLabel').textContent = text.messageLabel;
+            document.getElementById('consultMessage').placeholder = text.messagePlaceholder;
+            document.getElementById('cancelBtn').textContent = text.cancelBtn;
+            document.getElementById('submitBtn').textContent = text.submitBtn;
+        }
+        
+        function closeConsultModal() {
+            document.getElementById('consultModal').classList.remove('active');
+            // 폼 초기화
+            document.getElementById('consultName').value = '';
+            document.getElementById('consultPhone').value = '';
+            document.getElementById('consultDept').value = '';
+            document.getElementById('consultMessage').value = '';
+        }
+        
+        function submitConsult() {
+            const name = document.getElementById('consultName').value.trim();
+            const phone = document.getElementById('consultPhone').value.trim();
+            const dept = document.getElementById('consultDept').value;
+            const message = document.getElementById('consultMessage').value.trim();
+            
+            // 유효성 검사
+            if (!name) {
+                alert('이름을 입력해주세요.');
+                return;
+            }
+            
+            if (!phone) {
+                alert('연락처를 입력해주세요.');
+                return;
+            }
+            
+            if (!dept) {
+                alert('관심 학과를 선택해주세요.');
+                return;
+            }
+            
+            // 전화번호 형식 검사
+            const phonePattern = /^01[0-9]-?[0-9]{3,4}-?[0-9]{4}$/;
+            if (!phonePattern.test(phone.replace(/-/g, ''))) {
+                alert('올바른 전화번호 형식이 아닙니다.\n예: 010-1234-5678');
+                return;
+            }
+            
+            // 해당 학과 교수 정보 가져오기
+            const professor = PROFESSORS[dept];
+            
+            if (!professor) {
+                alert('해당 학과 정보를 찾을 수 없습니다.');
+                return;
+            }
+            
+            // SMS 내용 생성
+            const languageMessages = {
+                ko: `[동원과기대 상담신청]
+학과: ${dept}
+이름: ${name}
+연락처: ${phone}${message ? '\n문의: ' + message : ''}`,
+                en: `[DIST Consultation Request]
+Dept: ${dept}
+Name: ${name}
+Phone: ${phone}${message ? '\nInquiry: ' + message : ''}`,
+                zh: `[东园科技大学咨询申请]
+专业: ${dept}
+姓名: ${name}
+电话: ${phone}${message ? '\n咨询: ' + message : ''}`,
+                vi: `[Yêu cầu tư vấn DIST]
+Khoa: ${dept}
+Tên: ${name}
+SĐT: ${phone}${message ? '\nHỏi: ' + message : ''}`,
+                ja: `[東園科技大学相談申請]
+学科: ${dept}
+名前: ${name}
+電話: ${phone}${message ? '\nお問い合わせ: ' + message : ''}`,
+                uz: `[DIST maslahat so'rovi]
+Bo'lim: ${dept}
+Ism: ${name}
+Tel: ${phone}${message ? '\nSavol: ' + message : ''}`,
+                bn: `[DIST পরামর্শ অনুরোধ]
+বিভাগ: ${dept}
+নাম: ${name}
+ফোন: ${phone}${message ? '\nঅনুসন্ধান: ' + message : ''}`
+            };
+            
+            const smsContent = encodeURIComponent(languageMessages[currentLanguage]);
+            const professorPhone = professor.phone.replace(/-/g, '');
+            
+            // SMS 앱 열기
+            window.location.href = `sms:${professorPhone}?body=${smsContent}`;
+            
+            // 모달 닫기
+            closeConsultModal();
+            
+            // 확인 메시지
+            const confirmMessages = {
+                ko: `✅ ${dept} ${professor.name} 교수님께 상담 문자가 전송됩니다.\n\n문자앱에서 전송 버튼을 눌러주세요!`,
+                en: `✅ Consultation SMS will be sent to Prof. ${professor.name} (${dept}).\n\nPlease press send in your SMS app!`,
+                zh: `✅ 将向${dept}的${professor.name}教授发送咨询短信。\n\n请在短信应用中按发送！`,
+                vi: `✅ Tin nhắn tư vấn sẽ được gửi đến GS ${professor.name} (${dept}).\n\nVui lòng nhấn gửi trong ứng dụng tin nhắn!`,
+                ja: `✅ ${dept}の${professor.name}教授に相談SMSが送信されます。\n\nSMSアプリで送信ボタンを押してください！`,
+                uz: `✅ ${dept} ${professor.name} professoriga maslahat SMS yuboriladi.\n\nSMS ilovasida yuborish tugmasini bosing!`,
+                bn: `✅ ${dept} এর অধ্যাপক ${professor.name} কে পরামর্শ SMS পাঠানো হবে।\n\nSMS অ্যাপে পাঠান বোতাম টিপুন!`
+            };
+            
+            addMessage(confirmMessages[currentLanguage]);
+        }
+    </script>
+</body>
+</html>
